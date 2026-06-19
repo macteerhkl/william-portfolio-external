@@ -126,7 +126,8 @@ const HorizontalMediaMarquee = ({ mediaItems, title }) => {
                   muted
                   loop
                   playsInline
-                  preload="metadata"
+                  preload="none"
+                  poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23111' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' fill='%23999' font-size='14' text-anchor='middle' dy='.3em'%3E视频加载中...%3C/text%3E%3C/svg%3E"
                   className="h-full w-full object-contain"
                   draggable={false}
                 />
