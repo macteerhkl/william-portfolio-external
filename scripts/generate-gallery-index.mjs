@@ -1,0 +1,186 @@
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import sizeOf from 'image-size'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const designDir = path.join(__dirname, '../public/media/gallery/design')
+const dynamicDir = path.join(__dirname, '../public/media/gallery/dynamic')
+const outputFile = path.join(__dirname, '../src/i18n/generatedGalleryData.js')
+
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
+const videoExtensions = ['.mp4', '.webm']
+
+const getMediaFiles = (folderPath) => {
+  if (!fs.existsSync(folderPath)) return { images: [], videos: [] }
+
+  const files = fs.readdirSync(folderPath)
+  const images = files.filter(f => imageExtensions.includes(path.extname(f).toLowerCase()))
+  const videos = files.filter(f => videoExtensions.includes(path.extname(f).toLowerCase()))
+
+  return { images, videos }
+}
+
+const generateTitle = (slug) => {
+  return { zh: slug, en: slug }
+}
+
+const generateSummary = (group) => {
+  if (group === 'design') {
+    return {
+      zh: 'XSTRAP',
+      en: 'XSTRAP',
+    }
+  }
+  return {
+    zh: '动态内容',
+    en: 'Dynamic content',
+  }
+}
+
+const getImageDimensions = (imagePath) => {
+  try {
+    const dimensions = sizeOf(imagePath)
+    return {
+      width: dimensions.width,
+      height: dimensions.height,
+      aspectRatio: dimensions.width / dimensions.height
+    }
+  } catch (e) {
+    return { width: 1500, height: 1500, aspectRatio: 1 }
+  }
+}
+
+const generateProjectsFromDir = (baseDir, group) => {
+  if (!fs.existsSync(baseDir)) {
+    console.warn(`Directory not found: ${baseDir}`)
+    return []
+  }
+
+  const items = fs.readdirSync(baseDir)
+  const projects = []
+
+  for (const item of items) {
+    const itemPath = path.join(baseDir, item)
+    const stat = fs.statSync(itemPath)
+
+    if (stat.isDirectory()) {
+      // 文件夹 = 一个项目
+      const { images, videos } = getMediaFiles(itemPath)
+
+      const coverSrc = images.length > 0
+        ? `/media/gallery/${group}/${item}/${images[0]}`
+        : null
+
+      const coverDimensions = coverSrc
+        ? getImageDimensions(path.join(__dirname, '../public', coverSrc))
+        : { width: 1500, height: 1500, aspectRatio: 1 }
+
+      const gallery = images.map(img => {
+        const imgPath = `/media/gallery/${group}/${item}/${img}`
+        const dimensions = getImageDimensions(path.join(__dirname, '../public', imgPath))
+        return {
+          src: imgPath,
+          ...dimensions
+        }
+      })
+
+      const previewVideo = videos.length > 0
+        ? `/media/gallery/${group}/${item}/${videos[0]}`
+        : null
+
+      projects.push({
+        id: `${group}-${item}`,
+        slug: item,
+        title: generateTitle(item),
+        summary: generateSummary(group),
+        description: generateSummary(group),
+        group,
+        coverSrc,
+        coverDimensions,
+        gallery,
+        previewVideo,
+        thumb: {
+          src: coverSrc,
+          fallback: coverSrc,
+        },
+      })
+    } else if (imageExtensions.includes(path.extname(item).toLowerCase())) {
+      // 单独图片文件 = 一个项目
+      const fileName = path.basename(item, path.extname(item))
+      const imgPath = `/media/gallery/${group}/${item}`
+      const dimensions = getImageDimensions(itemPath)
+
+      projects.push({
+        id: `${group}-${fileName}`,
+        slug: fileName,
+        title: generateTitle(fileName),
+        summary: generateSummary(group),
+        description: generateSummary(group),
+        group,
+        coverSrc: imgPath,
+        coverDimensions: dimensions,
+        gallery: [{ src: imgPath, ...dimensions }],
+        previewVideo: null,
+        thumb: {
+          src: imgPath,
+          fallback: imgPath,
+        },
+      })
+    } else if (videoExtensions.includes(path.extname(item).toLowerCase())) {
+      // 单独视频文件 = 一个项目
+      const fileName = path.basename(item, path.extname(item))
+      const videoPath = `/media/gallery/${group}/${item}`
+
+      projects.push({
+        id: `${group}-${fileName}`,
+        slug: fileName,
+        title: generateTitle(fileName),
+        summary: generateSummary(group),
+        description: generateSummary(group),
+        group,
+        coverSrc: null,
+        coverDimensions: { width: 1920, height: 1080, aspectRatio: 16/9 },
+        gallery: [],
+        previewVideo: videoPath,
+        thumb: {
+          src: null,
+          fallback: null,
+        },
+      })
+    }
+  }
+
+  return projects.filter(p => p.coverSrc || p.gallery.length > 0 || p.previewVideo)
+}
+
+const main = () => {
+  console.log('Scanning gallery directories...')
+
+  const designProjects = generateProjectsFromDir(designDir, 'design')
+  const dynamicProjects = generateProjectsFromDir(dynamicDir, 'dynamic')
+
+  const allProjects = [...designProjects, ...dynamicProjects]
+
+  const output = `// Auto-generated by scripts/generate-gallery-index.mjs
+// Do not edit manually
+
+export const categories = [
+  { id: 'all', label: { zh: '全部', en: 'All' } },
+  { id: 'design', label: { zh: '已上传平面设计', en: 'Uploaded Design' } },
+  { id: 'dynamic', label: { zh: '动态', en: 'Dynamic' } },
+]
+
+export const projects = ${JSON.stringify(allProjects, null, 2)}
+`
+
+  fs.writeFileSync(outputFile, output, 'utf-8')
+  console.log(`✓ Generated ${designProjects.length} design projects`)
+  console.log(`✓ Generated ${dynamicProjects.length} dynamic projects`)
+  console.log(`✓ Total: ${allProjects.length} projects`)
+  console.log(`✓ Output: ${outputFile}`)
+}
+
+main()
