@@ -10,11 +10,21 @@ const galleryProjects = projects.length > 0 ? projects : fallbackProjects
 
 // 从 project 取封面 src，优先新路径，fallback 到旧路径
 const getCoverSrc = (project) => {
-  return project.coverSrc ?? project.thumb?.src ?? null
+  const src = project.coverSrc ?? project.thumb?.src ?? null
+  // 如果是绝对路径（以 / 开头），添加 base URL
+  if (src && src.startsWith('/')) {
+    return `${import.meta.env.BASE_URL}${src.substring(1)}`
+  }
+  return src
 }
 
 const getCoverFallback = (project) => {
-  return project.thumb?.fallback ?? project.thumb?.src ?? null
+  const src = project.thumb?.fallback ?? project.thumb?.src ?? null
+  // 如果是绝对路径（以 / 开头），添加 base URL
+  if (src && src.startsWith('/')) {
+    return `${import.meta.env.BASE_URL}${src.substring(1)}`
+  }
+  return src
 }
 
 const GalleryCard = ({ lang, project, index, onOpen }) => {
@@ -23,7 +33,13 @@ const GalleryCard = ({ lang, project, index, onOpen }) => {
   const summary = project.summary?.[lang] ?? project.summary
   const coverSrc = getCoverSrc(project)
   const coverFallback = getCoverFallback(project)
-  const hasVideo = Boolean(project.previewVideo)
+
+  // 处理视频路径
+  let videoSrc = project.previewVideo
+  if (videoSrc && videoSrc.startsWith('/')) {
+    videoSrc = `${import.meta.env.BASE_URL}${videoSrc.substring(1)}`
+  }
+  const hasVideo = Boolean(videoSrc)
   const isFeatured = project.slug === 'motion-showcase'
 
   const [isHovered, setIsHovered] = useState(false)
@@ -72,7 +88,7 @@ const GalleryCard = ({ lang, project, index, onOpen }) => {
           {hasVideo ? (
             <video
               ref={videoRef}
-              src={project.previewVideo}
+              src={videoSrc}
               muted
               loop
               playsInline
