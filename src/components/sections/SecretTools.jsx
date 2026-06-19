@@ -6,13 +6,13 @@ import { siteCopy } from '../../i18n/siteCopy'
 
 // SMP 软件截图
 const smpScreenshots = [
-  '/media/gallery/sofware01/StartMenuPro_gkQ4AAmeg6.png',
-  '/media/gallery/sofware01/StartMenuPro_hGNycgMUA2.png',
-  '/media/gallery/sofware01/StartMenuPro_Jylm6kxEJm.png',
-  '/media/gallery/sofware01/StartMenuPro_LRogJbhRGJ.png',
-  '/media/gallery/sofware01/StartMenuPro_Lu34TqfBY7.png',
-  '/media/gallery/sofware01/StartMenuPro_NNP8949lrC.png',
-  '/media/gallery/sofware01/StartMenuPro_XqT5MceyVi.png',
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_gkQ4AAmeg6.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_hGNycgMUA2.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_Jylm6kxEJm.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_LRogJbhRGJ.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_Lu34TqfBY7.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_NNP8949lrC.png`,
+  `${import.meta.env.BASE_URL}media/gallery/sofware01/StartMenuPro_XqT5MceyVi.png`,
 ]
 
 // 管理员邀请码（实际应该放在服务器端验证）
