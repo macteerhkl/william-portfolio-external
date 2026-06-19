@@ -14,24 +14,39 @@ const ProjectModal = ({ lang, project, onClose }) => {
   // 构建媒体列表：优先新路径 /media/gallery/...，fallback 到旧路径
   const mediaItems = (() => {
     const items = []
+
+    // 辅助函数：处理路径，添加 base URL
+    const processPath = (path) => {
+      if (!path) return null
+      if (path.startsWith('/')) {
+        return `${import.meta.env.BASE_URL}${path.substring(1)}`
+      }
+      return path
+    }
+
     // 封面
     const coverSrc = project.coverSrc ?? project.cover?.src ?? project.cover
     const coverFallback = project.cover?.full?.fallback ?? project.thumb?.fallback
-    if (coverSrc) items.push({ type: 'image', src: coverSrc, fallback: coverFallback })
+    if (coverSrc) items.push({ type: 'image', src: processPath(coverSrc), fallback: processPath(coverFallback) })
+
     // gallery 数组
     if (Array.isArray(project.gallery)) {
       for (const g of project.gallery) {
         if (typeof g === 'string') {
-          items.push({ type: 'image', src: g, fallback: null })
+          items.push({ type: 'image', src: processPath(g), fallback: null })
         } else {
           const src = g?.full?.src ?? g?.src
           const fallback = g?.full?.fallback ?? g?.fallback
-          if (src) items.push({ type: 'image', src, fallback })
+          if (src) items.push({ type: 'image', src: processPath(src), fallback: processPath(fallback) })
         }
       }
     }
+
     // 视频
-    if (project.previewVideo) items.push({ type: 'video', src: project.previewVideo })
+    if (project.previewVideo) {
+      items.push({ type: 'video', src: processPath(project.previewVideo) })
+    }
+
     return items.length ? items : [{ type: 'image', src: null, fallback: null }]
   })()
 
